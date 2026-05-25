@@ -1,6 +1,15 @@
 // API and Auth State Management (formerly firebase.js)
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+const getApiBaseUrl = () => {
+    try {
+        if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE_URL) {
+            return import.meta.env.VITE_API_BASE_URL;
+        }
+    } catch (e) {}
+    return '';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 export const apiCall = async (endpoint, method = 'GET', body = null) => {
     const token = localStorage.getItem('auth_token');
@@ -68,7 +77,7 @@ const startPoller = () => {
             const path = window.location.pathname;
             
             if (data.status === 'approved' && !path.includes('dashboard') && !path.includes('payment')) {
-                window.location.href = '/dashboard';
+                window.location.href = '/dashboard.html';
             }
             
             // Only show overlay if status is pending AND they have already submitted details (fullName exists)

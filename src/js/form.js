@@ -78,7 +78,7 @@ if (detailsForm) {
 
             updateProgress(100);
             alert("Application submitted successfully! Our team will review it.");
-            window.location.href = '/dashboard';
+            window.location.href = '/dashboard.html';
             
         } catch (error) {
             console.error("Submission error", error);
@@ -95,13 +95,17 @@ function blobToBase64(blob) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onloadend = () => resolve(reader.result);
-        reader.onerror = reject;
+        reader.onerror = () => reject(new Error("Failed to convert image to base64"));
         reader.readAsDataURL(blob);
     });
 }
 
 function compressImage(file) {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
+        if (!file || !file.type.startsWith('image/')) {
+            reject(new Error("File is not a valid image"));
+            return;
+        }
         const reader = new FileReader();
         reader.readAsDataURL(file);
         reader.onload = (event) => {
@@ -120,9 +124,14 @@ function compressImage(file) {
                 canvas.height = height;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
-                canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.6);
+                canvas.toBlob((blob) => {
+                    if (blob) resolve(blob);
+                    else reject(new Error("Canvas compression failed"));
+                }, 'image/jpeg', 0.6);
             };
+            img.onerror = () => reject(new Error("Failed to load image for compression"));
         };
+        reader.onerror = () => reject(new Error("Failed to read image file"));
     });
 }
 

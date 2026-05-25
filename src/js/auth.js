@@ -24,7 +24,7 @@ if (loginBtn) {
             setAuthState(token, user);
             
             if (user.role === 'admin') {
-                window.location.href = '/admin';
+                window.location.href = '/admin/admin.html';
                 return;
             }
             
