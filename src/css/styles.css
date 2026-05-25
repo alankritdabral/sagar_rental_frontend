@@ -1,0 +1,18 @@
+/* Custom styles can be added here */
+/* Tailwind handles most of the styling */
+
+input:focus, select:focus, textarea:focus {
+    box-shadow: 0 0 0 2px rgb(59 130 246);
+    border-color: transparent;
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+}
+
+.glass-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.glass-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}

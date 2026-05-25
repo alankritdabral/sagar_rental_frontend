@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Owner Dashboard | Rental Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: white; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            
+            border-radius: 1rem;
+        }
+        .admin-table th { @apply px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider bg-white/5; }
+        .admin-table td { @apply px-4 py-4 whitespace-nowrap text-sm text-slate-300 border-b border-white/5; }
+        .detail-label { @apply text-[10px] text-slate-500 uppercase font-bold mb-1; }
+        .detail-value { @apply text-sm text-white mb-3; }
+        .doc-thumb { @apply w-full h-24 object-cover rounded-lg border border-white/10 hover:border-blue-500 cursor-pointer transition-all; }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+    <div class="max-w-7xl mx-auto">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+            <div>
+                <h1 class="text-3xl font-bold">Owner Dashboard</h1>
+                <p class="text-slate-400">Manage customer verifications and rental approvals.</p>
+            </div>
+            <button id="admin-logout" class="bg-red-600/20 text-red-500 px-4 py-2 rounded-lg hover:bg-red-600 hover:text-white transition-all">Logout</button>
+        </div>
+
+        <div class="mb-12">
+            <h2 class="text-xl font-bold mb-4">Customer Verifications</h2>
+            <div class="glass-card overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full admin-table">
+                        <thead>
+                            <tr>
+                                <th>Customer</th>
+                                <th>Applied On</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="user-list">
+                            <!-- Users will be injected here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <h2 class="text-xl font-bold mb-4">Rental & Payment Tracking</h2>
+            <div class="glass-card overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full admin-table">
+                        <thead>
+                            <tr>
+                                <th>Customer</th>
+                                <th>Vehicle</th>
+                                <th>Payment</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rental-list">
+                            <!-- Rentals will be injected here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Detail Modal (Consolidated) -->
+    <div id="detail-modal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-card max-w-5xl w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold" id="modal-user-name">Customer Name</h2>
+                    <p class="text-slate-400" id="modal-user-phone">Phone Number</p>
+                </div>
+                <button id="close-detail-modal" class="text-slate-500 hover:text-white text-2xl">&times;</button>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Left: User Info -->
+                <div class="space-y-4">
+                    <div class="bg-white/5 p-4 rounded-xl border border-white/10">
+                        <h3 class="text-blue-400 font-bold mb-4 text-xs uppercase">KYC Information</h3>
+                        <div class="detail-label">Email Address</div>
+                        <div class="detail-value" id="val-email">--</div>
+                        <div class="detail-label">Driving License No.</div>
+                        <div class="detail-value" id="val-dl">--</div>
+                        <div class="detail-label">Aadhaar Number</div>
+                        <div class="detail-value" id="val-aadhaar">--</div>
+                        <div class="detail-label">Current Address</div>
+                        <div class="detail-value text-xs" id="val-address">--</div>
+                    </div>
+
+                    <div class="bg-white/5 p-4 rounded-xl border border-white/10">
+                        <h3 class="text-blue-400 font-bold mb-4 text-xs uppercase">Documents</h3>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <div class="detail-label">Photo</div>
+                                <img id="img-photo" class="doc-thumb preview-trigger" src="">
+                            </div>
+                            <div>
+                                <div class="detail-label">Signature</div>
+                                <img id="img-sign" class="doc-thumb preview-trigger" src="">
+                            </div>
+                            <div>
+                                <div class="detail-label">DL Front</div>
+                                <img id="img-dlf" class="doc-thumb preview-trigger" src="">
+                            </div>
+                            <div>
+                                <div class="detail-label">DL Back</div>
+                                <img id="img-dlb" class="doc-thumb preview-trigger" src="">
+                            </div>
+                            <div>
+                                <div class="detail-label">Aadhaar</div>
+                                <img id="img-aadhaar" class="doc-thumb preview-trigger" src="">
+                            </div>
+                            <div>
+                                <div class="detail-label">Selfie w/ ID</div>
+                                <img id="img-selfie" class="doc-thumb preview-trigger" src="">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Rental Form & Payment (Spans 2 cols) -->
+                <div class="lg:col-span-2 space-y-6">
+                    <!-- Rental Form -->
+                    <div class="bg-blue-600/5 p-6 rounded-xl border border-blue-500/20">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-blue-400 font-bold text-sm uppercase">Rental & Vehicle Assignment</h3>
+                            <span id="rental-status-badge" class="px-2 py-0.5 rounded text-[10px] font-bold uppercase"></span>
+                        </div>
+                        
+                        <form id="rental-form" class="space-y-4">
+                            <input type="hidden" id="modal-uid">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1">Vehicle Number</label>
+                                    <input type="text" name="vehicleNo" required placeholder="GA 01 X 1234" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1">Vehicle Model</label>
+                                    <input type="text" name="vehicleModel" required placeholder="Activa 6G" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1">Meter Reading</label>
+                                    <input type="number" name="meterReading" required class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1">Helmet Number</label>
+                                    <input type="text" name="helmetNo" class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1">Rent Date</label>
+                                    <input type="date" name="rentDate" required class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1">Return Date</label>
+                                    <input type="date" name="returnDate" required class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1">Rent Amount</label>
+                                    <input type="number" name="rent" id="rent-amt" required class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1">Security Deposit</label>
+                                    <input type="number" name="security" id="security-amt" required class="w-full bg-slate-800 border border-slate-700 rounded p-2 text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-slate-400 mb-1">Total Due</label>
+                                    <div id="total-amt-display" class="bg-blue-600/20 text-blue-400 font-bold p-2 rounded text-center">₹0</div>
+                                </div>
+                            </div>
+                            <div id="rental-submit-container" class="pt-4">
+                                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-bold shadow-lg transition-all">Assign Vehicle & Approve KYC</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Payment Verification Section -->
+                    <div id="payment-verify-section" class="bg-green-600/5 p-6 rounded-xl border border-green-500/20 hidden">
+                        <h3 class="text-green-400 font-bold mb-4 text-xs uppercase">Payment Verification</h3>
+                        <div class="flex items-center justify-between bg-white/5 p-4 rounded-lg">
+                            <div>
+                                <div class="detail-label">UTR / Transaction ID</div>
+                                <div class="text-lg font-mono text-green-400" id="val-utr">--</div>
+                            </div>
+                            <button id="btn-confirm-paid" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-bold shadow-lg transition-all">Confirm Payment Received</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Preview Modal -->
+    <div id="image-modal" class="fixed inset-0 bg-black/95 z-[60] hidden flex items-center justify-center p-4">
+        <div class="max-w-5xl w-full flex flex-col items-center">
+            <img id="modal-img" src="" class="max-h-[80vh] rounded shadow-2xl">
+            <button id="close-image-btn" class="mt-6 bg-white/10 text-white px-8 py-2 rounded-full hover:bg-white/20">Close Preview</button>
+        </div>
+    </div>
+
+    <!-- App Scripts -->
+    <script type="module">
+        import { auth, apiCall, logout } from '/src/js/api.js';
+
+        let cachedUsers = [];
+        let cachedRentals = [];
+
+        // Admin check
+        async function checkAdmin() {
+            if (!auth.currentUser) { window.location.href = '/'; return; }
+            if (auth.currentUser.role !== 'admin') {
+                alert("Unauthorized Access!");
+                window.location.href = '/';
+                return;
+            }
+
+            try {
+                // Verify with server
+                const userData = await apiCall('/api/users');
+                if (!userData || userData.role !== 'admin') {
+                    window.location.href = '/';
+                    return;
+                }
+                loadDashboard();
+            } catch (e) {
+                console.error(e);
+                window.location.href = '/';
+            }
+        }
+
+        document.getElementById('admin-logout').onclick = () => {
+            logout();
+            window.location.href = 'index.html';
+        };
+
+        async function loadDashboard() {
+            try {
+                const [users, rentals] = await Promise.all([
+                    apiCall('/api/users?all=true'),
+                    apiCall('/api/rentals?all=true')
+                ]);
+
+                cachedUsers = users;
+                cachedRentals = rentals;
+
+                // 1. Render KYC Table
+                const userList = document.getElementById('user-list');
+                userList.innerHTML = '';
+                users.forEach(data => {
+                    if (data.role === 'admin') return;
+                    if (data.status === 'approved') return;
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>
+                            <div class="font-bold text-white">${data.fullName}</div>
+                            <div class="text-[10px] text-slate-500">${data.phone}</div>
+                        </td>
+                        <td class="text-xs text-slate-500">${new Date(data.createdAt).toLocaleDateString()}</td>
+                        <td>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-yellow-600/20 text-yellow-400">
+                                ${data.status}
+                            </span>
+                        </td>
+                        <td>
+                            <button class="view-detail-btn bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white px-3 py-1 rounded text-xs transition-all" data-uid="${data.uid}">View Details</button>
+                        </td>
+                    `;
+                    userList.appendChild(tr);
+                });
+
+                // 2. Render Rental & Payment Table
+                const rentalList = document.getElementById('rental-list');
+                rentalList.innerHTML = '';
+                rentals.forEach(rental => {
+                    const user = users.find(u => u.uid === rental.userId);
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>
+                            <div class="font-bold text-white">${user?.fullName || 'Unknown'}</div>
+                            <div class="text-[10px] text-slate-500">${user?.phone || rental.userId}</div>
+                        </td>
+                        <td>
+                            <div class="text-white text-xs font-bold">${rental.vehicleModel}</div>
+                            <div class="text-[10px] text-slate-500">${rental.vehicleNo}</div>
+                        </td>
+                        <td>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                                rental.paymentStatus === 'paid' ? 'bg-green-600/20 text-green-400' : 
+                                rental.paymentStatus === 'pending_verification' ? 'bg-blue-600/20 text-blue-400' : 
+                                'bg-slate-600/20 text-slate-400'
+                            }">
+                                ${rental.paymentStatus}
+                            </span>
+                        </td>
+                        <td>
+                            <button class="view-detail-btn bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white px-3 py-1 rounded text-xs transition-all" data-uid="${rental.userId}">Manage Rental</button>
+                        </td>
+                    `;
+                    rentalList.appendChild(tr);
+                });
+
+                // Use Event Delegation for View Details buttons
+                document.body.onclick = (e) => {
+                    const btn = e.target.closest('.view-detail-btn');
+                    if (btn) {
+                        const uid = btn.getAttribute('data-uid');
+                        console.log("Opening details for UID:", uid);
+                        openDetailModal(uid);
+                    }
+                };
+
+            } catch (e) {
+                console.error("Dashboard Load Error:", e);
+            }
+        }
+
+        function openDetailModal(uid) {
+            console.log("Searching for user in cache...", cachedUsers);
+            const user = cachedUsers.find(u => u.uid === uid);
+            const rental = cachedRentals.find(r => r.userId === uid);
+
+            if (!user) {
+                console.error("User not found in cache for UID:", uid);
+                return;
+            }
+
+            console.log("Found User:", user);
+            console.log("Found Rental:", rental);
+
+            // Populate User Info
+            document.getElementById('modal-user-name').innerText = user.fullName || 'No Name';
+            document.getElementById('modal-user-phone').innerText = user.phone || 'No Phone';
+            document.getElementById('val-email').innerText = user.email || 'N/A';
+            document.getElementById('val-dl').innerText = user.dlNumber || 'N/A';
+            document.getElementById('val-aadhaar').innerText = user.aadhaarNumber || 'N/A';
+            document.getElementById('val-address').innerText = user.address || 'N/A';
+            document.getElementById('modal-uid').value = uid;
+
+            // Populate Images (with Fallback)
+            const docs = user.documents || {};
+            document.getElementById('img-photo').src = docs.userPhoto || '';
+            document.getElementById('img-sign').src = user.signatureUrl || '';
+            document.getElementById('img-dlf').src = docs.dlFront || '';
+            document.getElementById('img-dlb').src = docs.dlBack || '';
+            document.getElementById('img-aadhaar').src = docs.aadhaar || '';
+            document.getElementById('img-selfie').src = docs.selfie || '';
+
+            // Handle Rental Form
+            const form = document.getElementById('rental-form');
+            const statusBadge = document.getElementById('rental-status-badge');
+            const submitContainer = document.getElementById('rental-submit-container');
+            const paySection = document.getElementById('payment-verify-section');
+
+            if (rental) {
+                console.log("Populating existing rental info...");
+                form.vehicleNo.value = rental.vehicleNo || '';
+                form.vehicleModel.value = rental.vehicleModel || '';
+                form.meterReading.value = rental.meterReading || '';
+                form.helmetNo.value = rental.helmetNo || '';
+                form.rentDate.value = rental.rentDate || '';
+                form.returnDate.value = rental.returnDate || '';
+                form.rent.value = rental.rent || 0;
+                form.security.value = rental.security || 0;
+                updateTotal();
+                
+                statusBadge.innerText = "Rental Assigned";
+                statusBadge.className = "px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-blue-600/20 text-blue-400";
+                submitContainer.classList.add('hidden');
+                
+                if (rental.paymentStatus === 'pending_verification') {
+                    paySection.classList.remove('hidden');
+                    document.getElementById('val-utr').innerText = rental.transactionId || 'N/A';
+                } else if (rental.paymentStatus === 'paid') {
+                    paySection.classList.remove('hidden');
+                    document.getElementById('val-utr').innerText = rental.transactionId || 'N/A';
+                    document.getElementById('btn-confirm-paid').innerText = "✓ Payment Verified";
+                    document.getElementById('btn-confirm-paid').disabled = true;
+                    document.getElementById('btn-confirm-paid').classList.add('opacity-50');
+                } else {
+                    paySection.classList.add('hidden');
+                }
+            } else {
+                console.log("No rental found, showing empty form...");
+                form.reset();
+                updateTotal();
+                statusBadge.innerText = "Awaiting Assignment";
+                statusBadge.className = "px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-yellow-600/20 text-yellow-400";
+                submitContainer.classList.remove('hidden');
+                paySection.classList.add('hidden');
+            }
+
+            document.getElementById('detail-modal').classList.remove('hidden');
+        }
+
+        // Rental form logic
+        const rentalForm = document.getElementById('rental-form');
+        const rentAmt = document.getElementById('rent-amt');
+        const securityAmt = document.getElementById('security-amt');
+        const totalDisplay = document.getElementById('total-amt-display');
+
+        function updateTotal() {
+            const total = (parseInt(rentAmt.value) || 0) + (parseInt(securityAmt.value) || 0);
+            totalDisplay.innerText = `₹${total}`;
+        }
+        rentAmt.oninput = updateTotal;
+        securityAmt.oninput = updateTotal;
+
+        rentalForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const formData = new FormData(rentalForm);
+            const uid = document.getElementById('modal-uid').value;
+            const total = (parseInt(rentAmt.value) || 0) + (parseInt(securityAmt.value) || 0);
+
+            try {
+                await apiCall('/api/rentals', 'POST', {
+                    userId: uid,
+                    vehicleNo: formData.get('vehicleNo'),
+                    vehicleModel: formData.get('vehicleModel'),
+                    meterReading: formData.get('meterReading'),
+                    helmetNo: formData.get('helmetNo'),
+                    rentDate: formData.get('rentDate'),
+                    returnDate: formData.get('returnDate'),
+                    rent: parseInt(formData.get('rent')),
+                    security: parseInt(formData.get('security')),
+                    totalAmount: total,
+                    paymentStatus: 'unpaid'
+                });
+
+                await apiCall('/api/users', 'PATCH', {
+                    targetUid: uid,
+                    updates: { status: 'approved' }
+                });
+
+                alert("Rental Assigned Successfully!");
+                document.getElementById('detail-modal').classList.add('hidden');
+                loadDashboard();
+            } catch (error) {
+                alert("Error: " + error.message);
+            }
+        };
+
+        document.getElementById('btn-confirm-paid').onclick = async () => {
+            const uid = document.getElementById('modal-uid').value;
+            try {
+                await apiCall('/api/rentals', 'PATCH', {
+                    userId: uid,
+                    paymentStatus: 'paid'
+                });
+                alert("Payment Verified!");
+                document.getElementById('detail-modal').classList.add('hidden');
+                loadDashboard();
+            } catch (e) {
+                alert(e.message);
+            }
+        };
+
+        // Modal Close logic
+        document.getElementById('close-detail-modal').onclick = () => document.getElementById('detail-modal').classList.add('hidden');
+        document.getElementById('close-image-btn').onclick = () => document.getElementById('image-modal').classList.add('hidden');
+        
+        // Image Preview logic - Move inside document click for better reliability
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('preview-trigger')) {
+                const img = e.target;
+                if (!img.src || img.src.includes('undefined')) return;
+                document.getElementById('modal-img').src = img.src;
+                document.getElementById('image-modal').classList.remove('hidden');
+            }
+        });
+
+        checkAdmin();
+    </script>
+</body>
+</html>

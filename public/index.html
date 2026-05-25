@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Verification | Rental Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: '#0f172a',
+                        glass: 'rgba(255, 255, 255, 0.05)',
+                        'glass-border': 'rgba(255, 255, 255, 0.1)',
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/src/css/styles.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: white; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center py-6 px-4">
+    <!-- Navbar -->
+    <nav class="w-full max-w-5xl flex justify-between items-center mb-10 px-4">
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-white">R</div>
+            <span class="font-bold text-xl tracking-tight hidden sm:inline">Rental Portal</span>
+        </div>
+        <div class="flex items-center gap-4">
+            <div id="user-nav-info" class="hidden flex items-center gap-3">
+                <span id="nav-user-phone" class="text-xs text-slate-400"></span>
+                <button id="nav-logout" class="text-xs bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded-lg border border-white/10 transition-all">Logout</button>
+            </div>
+            <a href="/admin-login" id="admin-login-link" class="text-xs font-semibold text-blue-400 hover:text-blue-300 transition-all flex items-center gap-1">
+                <span>Admin Access</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Background elements -->
+    <div class="fixed top-0 left-0 w-full h-full -z-10 overflow-hidden">
+        <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/20 blur-[120px] rounded-full"></div>
+        <div class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-600/20 blur-[120px] rounded-full"></div>
+    </div>
+
+    <!-- Container -->
+    <div class="w-full max-w-xl">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold tracking-tight text-white mb-2">Customer Verification</h1>
+            <p class="text-slate-400">Complete your verification and declaration to proceed with rental.</p>
+        </div>
+
+        <div id="form-container" class="glass-card p-6 shadow-2xl">
+            <form id="details-form" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-1">Full Name</label>
+                        <input type="text" name="fullName" required class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-white">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-1">Email Address</label>
+                        <input type="email" name="email" required class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-white">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-1">Phone Number</label>
+                    <div class="flex gap-2">
+                        <span class="inline-flex items-center px-3 rounded-lg border border-slate-700 bg-slate-800 text-slate-400">+91</span>
+                        <input type="tel" id="phone" name="phone" required placeholder="9876543210" class="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-white">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-1">Driving License No.</label>
+                        <input type="text" name="dlNumber" required class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-white">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-1">Aadhaar Number</label>
+                        <input type="text" name="aadhaarNumber" required class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-white">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-1">Current Address</label>
+                    <textarea name="address" required rows="2" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"></textarea>
+                </div>
+
+                <!-- Document Uploads -->
+                <div class="pt-4 border-t border-white/5 space-y-4">
+                    <h3 class="text-sm font-bold text-blue-400">Document Uploads</h3>
+                    
+                    <div class="upload-field bg-blue-600/10 p-4 rounded-xl border border-blue-500/30">
+                        <label class="block text-sm font-bold text-blue-400 mb-1">Your Profile Photo</label>
+                        <input type="file" id="userPhoto" accept="image/*" required class="w-full text-xs text-slate-400 file:mr-2 file:py-2 file:px-3 file:rounded file:border-0 file:bg-blue-600 file:text-white">
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="upload-field">
+                            <label class="block text-sm font-medium text-slate-300 mb-1">DL Front Copy</label>
+                            <input type="file" id="dlFront" accept="image/*" required class="w-full text-xs text-slate-400 file:mr-2 file:py-2 file:px-3 file:rounded file:border-0 file:bg-slate-800 file:text-slate-300">
+                        </div>
+                        <div class="upload-field">
+                            <label class="block text-sm font-medium text-slate-300 mb-1">DL Back Copy</label>
+                            <input type="file" id="dlBack" accept="image/*" required class="w-full text-xs text-slate-400 file:mr-2 file:py-2 file:px-3 file:rounded file:border-0 file:bg-slate-800 file:text-slate-300">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="upload-field">
+                            <label class="block text-sm font-medium text-slate-300 mb-1">Aadhaar Front/Back</label>
+                            <input type="file" id="aadhaarDoc" accept="image/*" required class="w-full text-xs text-slate-400 file:mr-2 file:py-2 file:px-3 file:rounded file:border-0 file:bg-slate-800 file:text-slate-300">
+                        </div>
+                        <div class="upload-field">
+                            <label class="block text-sm font-medium text-slate-300 mb-1">Selfie with ID</label>
+                            <input type="file" id="selfie" accept="image/*" required class="w-full text-xs text-slate-400 file:mr-2 file:py-2 file:px-3 file:rounded file:border-0 file:bg-slate-800 file:text-slate-300">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Declaration Checkbox -->
+                <div class="p-4 bg-blue-900/20 border border-blue-500/30 rounded-lg">
+                    <p class="text-[11px] text-slate-300 leading-relaxed mb-3">
+                        I hereby declare that all the information provided by me is true and correct to the best of my knowledge. I agree to abide by the terms and conditions of the rental agreement.
+                    </p>
+                    <div class="flex items-center">
+                        <input type="checkbox" id="declaration-check" required class="w-4 h-4 rounded bg-slate-800 border-slate-700 text-blue-600 focus:ring-blue-500">
+                        <label for="declaration-check" class="ml-2 text-xs text-slate-300 font-semibold cursor-pointer">I agree to the terms and conditions</label>
+                    </div>
+                </div>
+
+                <div id="upload-progress" class="hidden">
+                    <div class="w-full bg-slate-800 rounded-full h-2 mt-4">
+                        <div id="progress-bar" class="bg-blue-600 h-2 rounded-full w-0 transition-all duration-300"></div>
+                    </div>
+                    <p class="text-[10px] text-center text-slate-400 mt-1">Compressing & Securing Documents...</p>
+                </div>
+
+                <button type="submit" id="submit-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-lg shadow-lg transition-all">Submit Verification</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- App Scripts -->
+    <script type="module" src="/src/js/api.js"></script>
+    <script type="module" src="/src/js/auth.js"></script>
+    <script type="module" src="/src/js/form.js"></script>
+    <script type="module">
+        import { auth, logout } from '/src/js/api.js';
+        
+        const updateNav = () => {
+            const userNav = document.getElementById('user-nav-info');
+            const adminLink = document.getElementById('admin-login-link');
+            const userPhone = document.getElementById('nav-user-phone');
+
+            if (auth.currentUser) {
+                userNav.classList.remove('hidden');
+                userPhone.innerText = auth.currentUser.phone;
+                if (auth.currentUser.role === 'admin') {
+                    adminLink.href = "/admin";
+                    adminLink.innerHTML = '<span>Dashboard</span>';
+                } else {
+                    adminLink.href = "/admin-login";
+                    adminLink.innerHTML = '<span>Admin Access</span>';
+                }
+            } else {
+                userNav.classList.add('hidden');
+                adminLink.href = "/admin-login";
+                adminLink.innerHTML = '<span>Admin Access</span>';
+            }
+        };
+
+        document.getElementById('nav-logout').onclick = () => {
+            logout();
+            window.location.reload();
+        };
+
+        window.addEventListener('auth-changed', updateNav);
+        updateNav();
+    </script>
+</body>
+</html>

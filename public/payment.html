@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment | Rental Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: white; }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+        }
+        #qrcode img { margin: 0 auto; border-radius: 0.5rem; padding: 10px; background: white; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+    <div class="fixed top-0 left-0 w-full h-full -z-10 overflow-hidden">
+        <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/20 blur-[120px] rounded-full"></div>
+        <div class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-600/20 blur-[120px] rounded-full"></div>
+    </div>
+
+    <div class="w-full max-w-2xl">
+        <div id="payment-container" class="glass-card p-6 shadow-2xl hidden">
+            <h2 class="text-2xl font-bold mb-6 text-center">Rental Summary & Payment</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <!-- Rental Details -->
+                <div class="space-y-4">
+                    <div class="bg-white/5 p-4 rounded-lg">
+                        <h3 class="text-xs font-bold text-slate-500 uppercase mb-2">Vehicle Details</h3>
+                        <p class="text-lg font-bold" id="display-model">--</p>
+                        <p class="text-sm text-slate-400" id="display-vno">--</p>
+                    </div>
+                    <div class="bg-white/5 p-4 rounded-lg">
+                        <h3 class="text-xs font-bold text-slate-500 uppercase mb-2">Rental Period</h3>
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p class="text-[10px] text-slate-500">Pick-up</p>
+                                <p class="text-sm" id="display-from">--</p>
+                            </div>
+                            <div class="text-slate-700">→</div>
+                            <div>
+                                <p class="text-[10px] text-slate-500">Drop-off</p>
+                                <p class="text-sm" id="display-to">--</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Breakup -->
+                <div class="bg-blue-600/10 border border-blue-500/30 p-6 rounded-xl flex flex-col justify-center text-center">
+                    <div id="qrcode" class="mb-4 flex justify-center"></div>
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-xs text-slate-400 px-4">
+                            <span>Rent</span>
+                            <span id="breakup-rent">₹0</span>
+                        </div>
+                        <div class="flex justify-between text-xs text-slate-400 px-4">
+                            <span>Security Deposit</span>
+                            <span id="breakup-security">₹0</span>
+                        </div>
+                        <div class="pt-2 mt-2 border-t border-blue-500/30 flex justify-between font-bold text-xl px-4 text-blue-400">
+                            <span>Total</span>
+                            <span id="display-total">₹0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <form id="payment-confirmation-form" class="space-y-4 max-w-md mx-auto">
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-1">Transaction ID / UTR</label>
+                    <input type="text" id="transactionId" required placeholder="Enter 12-digit UTR" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-white">
+                </div>
+                <button type="submit" id="confirm-payment-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition-all shadow-lg">Confirm Payment</button>
+            </form>
+        </div>
+
+        <div id="payment-loader" class="text-center">
+            <div class="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p class="text-slate-400">Fetching your rental details...</p>
+        </div>
+    </div>
+
+    <!-- App Scripts -->
+    <script type="module">
+        import { auth, apiCall } from '/src/js/api.js';
+
+        const UPI_ID = "YOURUPI@upi"; // Hardcoded for now or use VITE_ prefix if using Vite properly
+        const MERCHANT_NAME = "Rental Portal";
+
+        async function init() {
+            if (!auth.currentUser) { window.location.href = 'index.html'; return; }
+            
+            try {
+                // Get User Status
+                const userData = await apiCall('/api/users');
+                if (!userData || userData.status !== 'approved') {
+                    window.location.href = 'index.html';
+                    return;
+                }
+
+                // Get Rental Details
+                const rentalData = await apiCall('/api/rentals');
+                if (rentalData) {
+                    renderRental(rentalData);
+                } else {
+                    alert("Rental details not found. Please contact owner.");
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function renderRental(data) {
+            document.getElementById('payment-loader').classList.add('hidden');
+            document.getElementById('payment-container').classList.remove('hidden');
+
+            document.getElementById('display-model').innerText = data.vehicleModel;
+            document.getElementById('display-vno').innerText = data.vehicleNo;
+            document.getElementById('display-from').innerText = data.rentDate;
+            document.getElementById('display-to').innerText = data.returnDate;
+            document.getElementById('breakup-rent').innerText = `₹${data.rent}`;
+            document.getElementById('breakup-security').innerText = `₹${data.security}`;
+            document.getElementById('display-total').innerText = `₹${data.totalAmount}`;
+
+            // Generate QR
+            const upiString = `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(MERCHANT_NAME)}&am=${data.totalAmount}&cu=INR&tn=${encodeURIComponent('Rental-'+data.userId)}`;
+            document.getElementById('qrcode').innerHTML = '';
+            new QRCode(document.getElementById("qrcode"), {
+                text: upiString,
+                width: 180,
+                height: 180
+            });
+        }
+
+        document.getElementById('payment-confirmation-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const txId = document.getElementById('transactionId').value;
+            const btn = document.getElementById('confirm-payment-btn');
+
+            try {
+                btn.disabled = true;
+                btn.innerText = "Submitting...";
+                
+                await apiCall('/api/rentals', 'PATCH', {
+                    transactionId: txId,
+                    paymentStatus: 'pending_verification'
+                });
+
+                alert("Payment confirmation submitted! Owner will verify your transaction shortly.");
+                window.location.href = '/';
+            } catch (error) {
+                alert("Error: " + error.message);
+                btn.disabled = false;
+                btn.innerText = "Confirm Payment";
+            }
+        };
+
+        init();
+    </script>
+</body>
+</html>
