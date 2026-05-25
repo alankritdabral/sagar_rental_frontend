@@ -25,7 +25,9 @@ export const apiCall = async (endpoint, method = 'GET', body = null) => {
     }
     if (body) options.body = JSON.stringify(body);
     
-    const url = endpoint.startsWith('http') ? endpoint : `${API_BASE_URL}${endpoint}`;
+    const baseUrl = API_BASE_URL.replace(/\/$/, '');
+    const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+    const url = endpoint.startsWith('http') ? endpoint : `${baseUrl}${cleanEndpoint}`;
     const response = await fetch(url, options);
     if (!response.ok) {
         const status = response.status;
