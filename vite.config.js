@@ -12,6 +12,7 @@ export default defineConfig({
         'admin/admin-login': resolve(__dirname, 'admin/admin-login.html'),
         payment: resolve(__dirname, 'payment.html'),
         dashboard: resolve(__dirname, 'dashboard.html'),
+        cars: resolve(__dirname, 'cars.html'),
       },
     },
   },
